@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Groundwater Guardian - Conservation Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1200px;
+            width: 100%;
+            padding: 20px;
+            position: relative;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .game-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .main-game-area {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .village-display {
+            background: #f0f4f8;
+            border-radius: 10px;
+            padding: 20px;
+            position: relative;
+            min-height: 400px;
+        }
+
+        .groundwater-meter {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .water-tank {
+            width: 100%;
+            height: 200px;
+            background: #e3f2fd;
+            border: 3px solid #1976d2;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .water-level {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: linear-gradient(180deg, #2196f3, #0d47a1);
+            transition: height 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .water-level::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255,255,255,0.1), 
+                transparent);
+            animation: wave 3s linear infinite;
+        }
+
+        @keyframes wave {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .control-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .control-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .control-card.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .control-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .control-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .control-cost {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .control-card.active .control-cost {
+            color: #fff;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .modal p {
+            line-height: 1.6;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .tip-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+
+        .tip-box h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .village-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .village-tile {
+            aspect-ratio: 1;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .village-tile:hover {
+            background: #f5f5f5;
+            transform: scale(1.05);
+        }
+
+        .village-tile.house {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+        }
+
+        .village-tile.farm {
+            background: linear-gradient(135deg, #4caf50, #388e3c);
+        }
+
+        .village-tile.well {
+            background: linear-gradient(135deg, #2196f3, #1976d2);
+        }
+
+        .village-tile.tree {
+            background: linear-gradient(135deg, #8bc34a, #689f38);
+        }
+
+        .weather-display {
+            background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .weather-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .achievement {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transform: translateX(400px);
+            transition: transform 0.5s ease;
+            z-index: 2000;
+        }
+
+        .achievement.show {
+            transform: translateX(0);
+        }
+
+        @media (max-width: 768px) {
+            .main-game-area {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .game-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .village-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .controls {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                padding: 20px;
+            }
+
+            .achievement {
+                right: 10px;
+                left: 10px;
+                transform: translateY(-100px);
+            }
+
+            .achievement.show {
+                transform: translateY(0);
+            }
+        }
+
+        .level-progress {
+            background: #e0e0e0;
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #8bc34a);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .rain-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            display: none;
+        }
+
+        .rain-animation.active {
+            display: block;
+        }
+
+        .raindrop {
+            position: absolute;
+            background: linear-gradient(transparent, #2196f3);
+            width: 2px;
+            height: 20px;
+            animation: fall 1s linear infinite;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(400px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>🌊 Groundwater Guardian 🌊</h1>
+            <p>Manage your village's water resources wisely!</p>
+        </div>
+
+        <div class="game-stats">
+            <div class="stat-card">
+                <div class="stat-label">💧 Water Level</div>
+                <div class="stat-value" id="waterLevel">75%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">⭐ Score</div>
+                <div class="stat-value" id="score">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">📊 Level</div>
+                <div class="stat-value" id="level">1</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">👥 Population</div>
+                <div class="stat-value" id="population">100</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">📅 Day</div>
+                <div class="stat-value" id="day">1</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">💰 Budget</div>
+                <div class="stat-value" id="budget">$1000</div>
+            </div>
+        </div>
+
+        <div class="weather-display">
+            <div class="weather-icon" id="weatherIcon">☀️</div>
+            <div id="weatherText">Sunny - Low water consumption expected</div>
+        </div>
+
+        <div class="level-progress">
+            <div class="progress-fill" id="levelProgress" style="width: 0%">
+                <span id="progressText">0/100 XP</span>
+            </div>
+        </div>
+
+        <div class="main-game-area">
+            <div class="village-display">
+                <h3 style="text-align: center; margin-bottom: 10px;">Your Village</h3>
+                <div class="village-grid" id="villageGrid">
+                    <!-- Village tiles will be generated here -->
+                </div>
+                <div class="rain-animation" id="rainAnimation">
+                    <!-- Rain drops will be generated here -->
+                </div>
+            </div>
+
+            <div class="groundwater-meter">
+                <h3 style="text-align: center; margin-bottom: 10px;">Groundwater Reserve</h3>
+                <div class="water-tank">
+                    <div class="water-level" id="waterTank" style="height: 75%">
+                        <span id="waterPercentage">75%</span>
+                    </div>
+                </div>
+                <div class="tip-box">
+                    <h3>💡 Quick Tip</h3>
+                    <p id="currentTip">Drip irrigation can save up to 50% water compared to traditional methods!</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-card" onclick="selectIrrigation('drip')">
+                <div class="control-icon">💧</div>
+                <div class="control-title">Drip Irrigation</div>
+                <div class="control-cost">$500 | Saves 50% water</div>
+            </div>
+            <div class="control-card" onclick="selectIrrigation('sprinkler')">
+                <div class="control-icon">⛲</div>
+                <div class="control-title">Sprinkler System</div>
+                <div class="control-cost">$300 | Saves 30% water</div>
+            </div>
+            <div class="control-card" onclick="selectIrrigation('traditional')">
+                <div class="control-icon">🌊</div>
+                <div class="control-title">Traditional</div>
+                <div class="control-cost">$100 | Standard usage</div>
+            </div>
+            <div class="control-card" onclick="implementRainwater()">
+                <div class="control-icon">🌧️</div>
+                <div class="control-title">Rainwater Harvest</div>
+                <div class="control-cost">$800 | Collect rain</div>
+            </div>
+            <div class="control-card" onclick="plantTrees()">
+                <div class="control-icon">🌳</div>
+                <div class="control-title">Plant Trees</div>
+                <div class="control-cost">$200 | Improve recharge</div>
+            </div>
+            <div class="control-card" onclick="educateCitizens()">
+                <div class="control-icon">📚</div>
+                <div class="control-title">Education Campaign</div>
+                <div class="control-cost">$400 | Reduce usage 20%</div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="nextDay()">Next Day ⏭️</button>
+            <button class="btn btn-secondary" onclick="showTips()">Conservation Tips 💡</button>
+            <button class="btn btn-secondary" onclick="showStats()">View Statistics 📊</button>
+            <button class="btn btn-secondary" onclick="resetGame()">New Game 🔄</button>
+        </div>
+    </div>
+
+    <!-- Educational Tips Modal -->
+    <div class="modal" id="tipsModal">
+        <div class="modal-content">
+            <h2>💡 Water Conservation Tips</h2>
+            <div class="tip-box">
+                <h3>Irrigation Methods</h3>
+                <p><strong>Drip Irrigation:</strong> Delivers water directly to plant roots, reducing evaporation by up to 50%.</p>
+                <p><strong>Sprinkler Systems:</strong> More efficient than flooding, saves about 30% water.</p>
+                <p><strong>Traditional Flooding:</strong> Least efficient, loses much water to evaporation.</p>
+            </div>
+            <div class="tip-box">
+                <h3>Rainwater Harvesting</h3>
+                <p>Collecting rainwater reduces dependency on groundwater and helps recharge aquifers naturally.</p>
+            </div>
+            <div class="tip-box">
+                <h3>Vegetation & Trees</h3>
+                <p>Trees improve groundwater recharge by allowing water to percolate slowly into the soil.</p>
+            </div>
+            <div class="tip-box">
+                <h3>Household Tips</h3>
+                <p>• Fix leaky taps - saves up to 20 liters/day</p>
+                <p>• Take shorter showers - saves 10 liters/minute</p>
+                <p>• Use full loads in washing machines</p>
+                <p>• Install water-efficient fixtures</p>
+            </div>
+            <button class="btn btn-primary" onclick="closeModal('tipsModal')">Got it!</button>
+        </div>
+    </div>
+
+    <!-- Statistics Modal -->
+    <div class="modal" id="statsModal">
+        <div class="modal-content">
+            <h2>📊 Game Statistics</h2>
+            <div id="statsContent">
+                <!-- Stats will be dynamically added here -->
+            </div>
+            <button class="btn btn-primary" onclick="closeModal('statsModal')">Close</button>
+        </div>
+    </div>
+
+    <!-- Level Complete Modal -->
+    <div class="modal" id="levelModal">
+        <div class="modal-content">
+            <h2>🎉 Level Complete!</h2>
+            <div id="levelContent">
+                <!-- Level complete info will be added here -->
+            </div>
+            <button class="btn btn-primary" onclick="nextLevel()">Next Level →</button>
+        </div>
+    </div>
+
+    <!-- Achievement Notification -->
+    <div class="achievement" id="achievement">
+        <strong>🏆 Achievement Unlocked!</strong>
+        <p id="achievementText">Water Saver!</p>
+    </div>
+
+    <script>
+        // Game State
+        let gameState = {
+            waterLevel: 75,
+            score: 0,
+            level: 1,
+            day: 1,
+            population: 100,
+            budget: 1000,
+            experience: 0,
+            irrigationType: 'traditional',
+            hasRainwaterSystem: false,
+            treeCount: 0,
+            educationLevel: 0,
+            dailyConsumption: 15,
+            weather: 'sunny',
+            achievements: [],
+            statistics: {
+                totalWaterSaved: 0,
+                totalDaysPlayed: 0,
+                totalMoneySpent: 0,
+                bestWaterLevel: 75,
+                worstWaterLevel: 75
+            }
+        };
+
+        // Weather patterns
+        const weatherPatterns = [
+            { type: 'sunny', icon: '☀️', text: 'Sunny - High water consumption', consumption: 1.2, recharge: 0 },
+            { type: 'cloudy', icon: '☁️', text: 'Cloudy - Normal consumption', consumption: 1.0, recharge: 0 },
+            { type: 'rainy', icon: '🌧️', text: 'Rainy - Water recharge active!', consumption: 0.8, recharge: 10 },
+            { type: 'stormy', icon: '⛈️', text: 'Storm - Heavy recharge!', consumption: 0.7, recharge: 20 },
+            { type: 'drought', icon: '🌵', text: 'Drought - Critical consumption!', consumption: 1.5, recharge: -5 }
+        ];
+
+        // Conservation tips
+        const tips = [
+            "Drip irrigation can save up to 50% water compared to traditional methods!",
+            "A single tree can help recharge 100 liters of groundwater annually.",
+            "Fixing a dripping tap can save 20 liters of water per day.",
+            "Rainwater harvesting can provide 30% of household water needs.",
+            "Native plants require 50% less water than exotic species.",
+            "Mulching around plants reduces evaporation by up to 70%.",
+            "Greywater recycling can reduce freshwater demand by 40%.",
+            "Smart irrigation controllers can save 20-30% water usage.",
+            "A 5-minute shorter shower saves approximately 50 liters.",
+            "Full loads in dishwashers use less water than hand washing."
+        ];
+
+        // Initialize game
+        function initGame() {
+            generateVillageGrid();
+            updateDisplay();
+            showRandomTip();
+            setRandomWeather();
+            
+            // Start auto-save
+            setInterval(saveGame, 30000);
+        }
+
+        // Generate village grid
+        function generateVillageGrid() {
+            const grid = document.getElementById('villageGrid');
+            grid.innerHTML = '';
+            
+            for (let i = 0; i < 12; i++) {
+                const tile = document.createElement('div');
+                tile.className = 'village-tile';
+                
+                if (i < 4) {
+                    tile.classList.add('house');
+                    tile.innerHTML = '🏠';
+                } else if (i < 8) {
+                    tile.classList.add('farm');
+                    tile.innerHTML = '🌾';
+                } else if (i === 8) {
+                    tile.classList.add('well');
+                    tile.innerHTML = '🏛️';
+                } else {
+                    tile.innerHTML = '🌱';
+                }
+                
+                tile.onclick = () => interactWithTile(tile, i);
+                grid.appendChild(tile);
+            }
+        }
+
+        // Interact with village tiles
+        function interactWithTile(tile, index) {
+            if (tile.classList.contains('farm')) {
+                showNotification('This farm is using ' + gameState.irrigationType + ' irrigation');
+            } else if (tile.classList.contains('house')) {
+                showNotification('House water usage: ' + (gameState.educationLevel > 0 ? 'Optimized' : 'Standard'));
+            } else if (tile.classList.contains('well')) {
+                showNotification('Central well - Water level: ' + gameState.waterLevel + '%');
+            }
+        }
+
+        // Update display
+        function updateDisplay() {
+            document.getElementById('waterLevel').textContent = Math.round(gameState.waterLevel) + '%';
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('level').textContent = gameState.level;
+            document.getElementById('population').textContent = gameState.population;
+            document.getElementById('day').textContent = gameState.day;
+            document.getElementById('budget').textContent = '$' + gameState.budget;
+            
+            // Update water tank
+            const tankHeight = Math.max(0, Math.min(100, gameState.waterLevel));
+            document.getElementById('waterTank').style.height = tankHeight + '%';
+            document.getElementById('waterPercentage').textContent = Math.round(tankHeight) + '%';
+            
+            // Update tank color based on level
+            const waterTank = document.getElementById('waterTank');
+            if (tankHeight < 25) {
+                waterTank.style.background = 'linear-gradient(180deg, #ff5252, #d32f2f)';
+            } else if (tankHeight < 50) {
+                waterTank.style.background = 'linear-gradient(180deg, #ff9800, #f57c00)';
+            } else {
+                waterTank.style.background = 'linear-gradient(180deg, #2196f3, #0d47a1)';
+            }
+            
+            // Update level progress
+            const progressPercent = (gameState.experience / (gameState.level * 100)) * 100;
+            document.getElementById('levelProgress').style.width = progressPercent + '%';
+            document.getElementById('progressText').textContent = 
+                gameState.experience + '/' + (gameState.level * 100) + ' XP';
+        }
+
+        // Select irrigation method
+        function selectIrrigation(type) {
+            const costs = {
+                drip: 500,
+                sprinkler: 300,
+                traditional: 100
+            };
+            
+            if (gameState.budget >= costs[type]) {
+                gameState.budget -= costs[type];
+                gameState.irrigationType = type;
+                gameState.statistics.totalMoneySpent += costs[type];
+                
+                // Update consumption based on irrigation
+                switch(type) {
+                    case 'drip':
+                        gameState.dailyConsumption = 7.5;
+                        showAchievement('Water Saver', 'Implemented drip irrigation!');
+                        gameState.score += 50;
+                        break;
+                    case 'sprinkler':
+                        gameState.dailyConsumption = 10.5;
+                        gameState.score += 30;
+                        break;
+                    default:
+                        gameState.dailyConsumption = 15;
+                }
+                
+                updateDisplay();
+                updateControlCards();
+                showNotification('Irrigation system updated to ' + type + '!');
+            } else {
+                showNotification('Insufficient budget!');
+            }
+        }
+
+        // Implement rainwater harvesting
+        function implementRainwater() {
+            if (gameState.budget >= 800 && !gameState.hasRainwaterSystem) {
+                gameState.budget -= 800;
+                gameState.hasRainwaterSystem = true;
+                gameState.statistics.totalMoneySpent += 800;
+                gameState.score += 100;
+                showAchievement('Rain Catcher', 'Installed rainwater harvesting!');
+                updateDisplay();
+                showNotification('Rainwater harvesting system installed!');
+            } else if (gameState.hasRainwaterSystem) {
+                showNotification('Rainwater system already installed!');
+            } else {
+                showNotification('Insufficient budget!');
+            }
+        }
+
+        // Plant trees
+        function plantTrees() {
+            if (gameState.budget >= 200) {
+                gameState.budget -= 200;
+                gameState.treeCount++;
+                gameState.statistics.totalMoneySpent += 200;
+                gameState.score += 20;
+                
+                // Add tree to a random empty tile
+                const tiles = document.querySelectorAll('.village-tile');
+                for (let tile of tiles) {
+                    if (tile.innerHTML === '🌱') {
+                        tile.innerHTML = '🌳';
+                        tile.classList.add('tree');
+                        break;
+                    }
+                }
+                
+                if (gameState.treeCount === 3) {
+                    showAchievement('Forest Guardian', 'Planted 3 trees!');
+                }
+                
+                updateDisplay();
+                showNotification('Tree planted! Groundwater recharge improved.');
+            } else {
+                showNotification('Insufficient budget!');
+            }
+        }
+
+        // Educate citizens
+        function educateCitizens() {
+            if (gameState.budget >= 400) {
+                gameState.budget -= 400;
+                gameState.educationLevel++;
+                gameState.dailyConsumption *= 0.8;
+                gameState.statistics.totalMoneySpent += 400;
+                gameState.score += 40;
+                
+                showAchievement('Educator', 'Conducted water conservation campaign!');
+                updateDisplay();
+                showNotification('Citizens educated! Water consumption reduced by 20%.');
+            } else {
+                showNotification('Insufficient budget!');
+            }
+        }
+
+        // Update control cards visual state
+        function updateControlCards() {
+            const cards = document.querySelectorAll('.control-card');
+            cards.forEach(card => card.classList.remove('active'));
+        }
+
+        // Next day simulation
+        function nextDay() {
+            gameState.day++;
+            gameState.statistics.totalDaysPlayed++;
+            
+            // Calculate water consumption
+            const weather = weatherPatterns.find(w => w.type === gameState.weather);
+            let consumption = gameState.dailyConsumption * weather.consumption;
+            consumption *= (gameState.population / 100);
+            
+            // Calculate water recharge
+            let recharge = weather.recharge;
+            if (gameState.hasRainwaterSystem && weather.recharge > 0) {
+                recharge *= 1.5;
+            }
+            recharge += gameState.treeCount * 0.5;
+            
+            // Update water level
+            gameState.waterLevel = gameState.waterLevel - consumption + recharge;
+            gameState.waterLevel = Math.max(0, Math.min(100, gameState.waterLevel));
+            
+            // Update statistics
+            gameState.statistics.bestWaterLevel = Math.max(gameState.statistics.bestWaterLevel, gameState.waterLevel);
+            gameState.statistics.worstWaterLevel = Math.min(gameState.statistics.worstWaterLevel, gameState.waterLevel);
+            gameState.statistics.totalWaterSaved += recharge;
+            
+            // Calculate score
+            if (gameState.waterLevel > 50) {
+                gameState.score += 10;
+                gameState.experience += 10;
+            } else if (gameState.waterLevel > 25) {
+                gameState.score += 5;
+                gameState.experience += 5;
+            } else {
+                showNotification('⚠️ Critical water level!');
+            }
+            
+            // Population growth
+            if (gameState.day % 5 === 0 && gameState.waterLevel > 50) {
+                gameState.population += 10;
+                showNotification('Population increased! More water needed.');
+            }
+            
+            // Daily budget increase
+            gameState.budget += 50;
+            
+            // Check level progression
+            if (gameState.experience >= gameState.level * 100) {
+                levelUp();
+            }
+            
+            // Random weather change
+            if (Math.random() > 0.7) {
+                setRandomWeather();
+            }
+            
+            // Check game over
+            if (gameState.waterLevel <= 0) {
+                gameOver();
+            }
+            
+            updateDisplay();
+            showRandomTip();
+        }
+
+        // Level up
+        function levelUp() {
+            gameState.level++;
+            gameState.experience = 0;
+            gameState.budget += 500;
+            
+            const modalContent = document.getElementById('levelContent');
+            modalContent.innerHTML = `
+                <p>Congratulations! You've reached Level ${gameState.level}!</p>
+                <p>🎁 Rewards:</p>
+                <ul>
+                    <li>+$500 Budget Bonus</li>
+                    <li>New challenges unlocked</li>
+                    <li>Population growth: +${gameState.level * 10} citizens</li>
+                </ul>
+                <div class="tip-box">
+                    <h3>New Challenge</h3>
+                    <p>Maintain water level above ${50 + gameState.level * 5}% for bonus points!</p>
+                </div>
+            `;
+            
+            showModal('levelModal');
+            showAchievement('Level Up!', 'Reached Level ' + gameState.level);
+            
+            gameState.population += gameState.level * 10;
+            updateDisplay();
+        }
+
+        // Next level
+        function nextLevel() {
+            closeModal('levelModal');
+            // Increase difficulty
+            gameState.dailyConsumption += 2;
+            setRandomWeather();
+        }
+
+        // Set random weather
+        function setRandomWeather() {
+            const randomWeather = weatherPatterns[Math.floor(Math.random() * weatherPatterns.length)];
+            gameState.weather = randomWeather.type;
+            
+            document.getElementById('weatherIcon').textContent = randomWeather.icon;
+            document.getElementById('weatherText').textContent = randomWeather.text;
+            
+            // Show rain animation if rainy
+            const rainAnimation = document.getElementById('rainAnimation');
+            if (randomWeather.type === 'rainy' || randomWeather.type === 'stormy') {
+                rainAnimation.classList.add('active');
+                createRaindrops();
+            } else {
+                rainAnimation.classList.remove('active');
+            }
+        }
+
+        // Create rain animation
+        function createRaindrops() {
+            const rainAnimation = document.getElementById('rainAnimation');
+            rainAnimation.innerHTML = '';
+            
+            for (let i = 0; i < 20; i++) {
+                const drop = document.createElement('div');
+                drop.className = 'raindrop';
+                drop.style.left = Math.random() * 100 + '%';
+                drop.style.animationDelay = Math.random() * 2 + 's';
+                rainAnimation.appendChild(drop);
+            }
+        }
+
+        // Show random tip
+        function showRandomTip() {
+            const randomTip = tips[Math.floor(Math.random() * tips.length)];
+            document.getElementById('currentTip').textContent = randomTip;
+        }
+
+        // Show achievement
+        function showAchievement(title, text) {
+            const achievement = document.getElementById('achievement');
+            document.getElementById('achievementText').textContent = text;
+            achievement.classList.add('show');
+            
+            gameState.achievements.push({ title, text, day: gameState.day });
+            
+            setTimeout(() => {
+                achievement.classList.remove('show');
+            }, 3000);
+        }
+
+        // Show notification
+        function showNotification(message) {
+            // Create temporary notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #333;
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                z-index: 3000;
+                animation: slideUp 0.3s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 2000);
+        }
+
+        // Show tips modal
+        function showTips() {
+            showModal('tipsModal');
+        }
+
+        // Show statistics
+        function showStats() {
+            const statsContent = document.getElementById('statsContent');
+            statsContent.innerHTML = `
+                <div class="stat-card" style="margin-bottom: 15px">
+                    <p><strong>Total Days Played:</strong> ${gameState.statistics.totalDaysPlayed}</p>
+                    <p><strong>Total Water Saved:</strong> ${Math.round(gameState.statistics.totalWaterSaved)}L</p>
+                    <p><strong>Total Money Spent:</strong> $${gameState.statistics.totalMoneySpent}</p>
+                    <p><strong>Best Water Level:</strong> ${Math.round(gameState.statistics.bestWaterLevel)}%</p>
+                    <p><strong>Worst Water Level:</strong> ${Math.round(gameState.statistics.worstWaterLevel)}%</p>
+                    <p><strong>Trees Planted:</strong> ${gameState.treeCount}</p>
+                    <p><strong>Education Campaigns:</strong> ${gameState.educationLevel}</p>
+                </div>
+                <h3>Achievements</h3>
+                ${gameState.achievements.map(a => 
+                    `<p>🏆 ${a.title} - Day ${a.day}</p>`
+                ).join('')}
+            `;
+            showModal('statsModal');
+        }
+
+        // Modal functions
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Game over
+        function gameOver() {
+            alert(`Game Over! Your village ran out of water.\n
+                   Final Score: ${gameState.score}\n
+                   Days Survived: ${gameState.day}\n
+                   Level Reached: ${gameState.level}`);
+            resetGame();
+        }
+
+        // Reset game
+        function resetGame() {
+            if (confirm('Are you sure you want to start a new game?')) {
+                gameState = {
+                    waterLevel: 75,
+                    score: 0,
+                    level: 1,
+                    day: 1,
+                    population: 100,
+                    budget: 1000,
+                    experience: 0,
+                    irrigationType: 'traditional',
+                    hasRainwaterSystem: false,
+                    treeCount: 0,
+                    educationLevel: 0,
+                    dailyConsumption: 15,
+                    weather: 'sunny',
+                    achievements: [],
+                    statistics: {
+                        totalWaterSaved: 0,
+                        totalDaysPlayed: 0,
+                        totalMoneySpent: 0,
+                        bestWaterLevel: 75,
+                        worstWaterLevel: 75
+                    }
+                };
+                
+                initGame();
+            }
+        }
+
+        // Save game state to localStorage
+        function saveGame() {
+            localStorage.setItem('groundwaterGuardian', JSON.stringify(gameState));
+        }
+
+        // Load game state from localStorage
+        function loadGame() {
+            const saved = localStorage.getItem('groundwaterGuardian');
+            if (saved) {
+                gameState = JSON.parse(saved);
+                updateDisplay();
+            }
+        }
+
+        // Initialize game on load
+        window.onload = function() {
+            loadGame();
+            initGame();
+        };
+
+        // Add keyboard controls
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'Enter':
+                case ' ':
+                    nextDay();
+                    break;
+                case '1':
+                    selectIrrigation('drip');
+                    break;
+                case '2':
+                    selectIrrigation('sprinkler');
+                    break;
+                case '3':
+                    selectIrrigation('traditional');
+                    break;
+                case '4':
+                    implementRainwater();
+                    break;
+                case '5':
+                    plantTrees();
+                    break;
+                case '6':
+                    educateCitizens();
+                    break;
+                case 't':
+                    showTips();
+                    break;
+                case 's':
+                    showStats();
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>
